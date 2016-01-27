@@ -1,5 +1,6 @@
 package langdet
 
+/*
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
@@ -135,3 +136,5 @@ func TestGetDistance(t *testing.T) {
 		})
 	})
 }
+
+*/

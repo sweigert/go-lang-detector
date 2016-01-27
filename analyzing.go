@@ -2,6 +2,7 @@ package langdet
 
 import (
 	"bytes"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -11,6 +12,11 @@ import (
 // cause bad accuracy, but better performance.
 // -1 for no maximum
 var maxSampleSize = 10000
+var janitor *regexp.Regexp
+
+func init() {
+	janitor = regexp.MustCompile("P{L}")
+}
 
 // Analyze creates the language profile from a given Text and returns it in a Language struct.
 func Analyze(text, name string) Language {
@@ -68,8 +74,14 @@ func generateNthGrams(resultMap map[string]int, text string, n int) {
 	padding := createPadding(n - 1)
 	text = padding + text + padding
 	upperBound := utf8.RuneCountInString(text) - (n - 1)
+
+	runeValues := []rune{}
+	for _, runeValue := range text {
+		runeValues = append(runeValues, runeValue)
+	}
+
 	for p := 0; p < upperBound; p++ {
-		currentToken := text[p : p+n]
+		currentToken := string(runeValues[p : p+n])
 		resultMap[currentToken]++
 	}
 }
@@ -86,31 +98,5 @@ func createPadding(length int) string {
 
 // cleanText removes newlines, special characters and numbers from a input text
 func cleanText(text string) string {
-	text = strings.Replace(text, "\n", " ", -1)
-	text = strings.Replace(text, ",", " ", -1)
-	text = strings.Replace(text, "#", " ", -1)
-	text = strings.Replace(text, "/", " ", -1)
-	text = strings.Replace(text, "\\", " ", -1)
-	text = strings.Replace(text, ".", " ", -1)
-	text = strings.Replace(text, "!", " ", -1)
-	text = strings.Replace(text, "?", " ", -1)
-	text = strings.Replace(text, ":", " ", -1)
-	text = strings.Replace(text, ";", " ", -1)
-	text = strings.Replace(text, "-", " ", -1)
-	text = strings.Replace(text, "'", " ", -1)
-	text = strings.Replace(text, "\"", " ", -1)
-	text = strings.Replace(text, "_", " ", -1)
-	text = strings.Replace(text, "*", " ", -1)
-	text = strings.Replace(text, "1", "", -1)
-	text = strings.Replace(text, "2", "", -1)
-	text = strings.Replace(text, "3", "", -1)
-	text = strings.Replace(text, "4", "", -1)
-	text = strings.Replace(text, "5", "", -1)
-	text = strings.Replace(text, "6", "", -1)
-	text = strings.Replace(text, "7", "", -1)
-	text = strings.Replace(text, "8", "", -1)
-	text = strings.Replace(text, "9", "", -1)
-	text = strings.Replace(text, "0", "", -1)
-	text = strings.Replace(text, "  ", " ", -1)
-	return text
+	return janitor.ReplaceAllString(text, " ")
 }

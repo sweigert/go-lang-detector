@@ -1,80 +1,84 @@
 package langdet
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+
+	"github.com/facebookgo/ensure"
 )
 
-func BenchmarkCalculateElapsedTimeInMillis(b *testing.B) {
-	sampleText := "TEXT"
-
-	for n := 0; n < b.N; n++ {
-		_ = createOccurenceMap(sampleText, 5)
+func TestCreateProfile(t *testing.T) {
+	sampleText := "Begrüßung"
+	sampleResult := map[string]int{
+		"ß":  1,
+		"u":  1,
+		"n":  1,
+		"Be": 1,
+		"rü": 1,
+		"ng": 1,
+		"e":  1,
+		"_B": 1,
+		"ßu": 1,
+		"r":  1,
+		"ü":  1,
+		"gr": 1,
+		"un": 1,
+		"g_": 1,
+		"B":  1,
+		"eg": 1,
+		"üß": 1,
+		"g":  2,
 	}
 
+	result := CreateOccurenceMap(sampleText, 1)
+	ensure.DeepEqual(t, sampleResult, result)
 }
 
-func TestCreateProfile(t *testing.T) {
-	sampleText := "TEXT"
-	Convey("Subject: Test create profile\n", t, func() {
-		Convey("result of 'TEXT' should contain when n=3:  T:2, E:1, X:1, T:1, ...", func() {
-			result := createOccurenceMap(sampleText, 3)
-			So(result["T"], ShouldEqual, 2)
-			So(result["E"], ShouldEqual, 1)
-			So(result["X"], ShouldEqual, 1)
-			So(result["_T"], ShouldEqual, 1)
-			So(result["TE"], ShouldEqual, 1)
-			So(result["EX"], ShouldEqual, 1)
-			So(result["XT"], ShouldEqual, 1)
-			So(result["T_"], ShouldEqual, 1)
-			So(result["_T"], ShouldEqual, 1)
-			So(result["__T"], ShouldEqual, 1)
-			So(result["_TE"], ShouldEqual, 1)
-			So(result["TEX"], ShouldEqual, 1)
-			So(result["EXT"], ShouldEqual, 1)
-			So(result["XT_"], ShouldEqual, 1)
-			So(result["T__"], ShouldEqual, 1)
-		})
-	})
-}
+func TestCreateProfile2(t *testing.T) {
+	sampleText := "Begrüßung"
+	sampleResult := map[string]int{
+		"g":   2,
+		"ü":   1,
+		"üß":  1,
+		"ßu":  1,
+		"egr": 1,
+		"ßun": 1,
+		"g__": 1,
+		"rü":  1,
+		"grü": 1,
+		"üßu": 1,
+		"ng_": 1,
+		"B":   1,
+		"r":   1,
+		"un":  1,
+		"_Be": 1,
+		"rüß": 1,
+		"e":   1,
+		"u":   1,
+		"_B":  1,
+		"eg":  1,
+		"Beg": 1,
+		"n":   1,
+		"__B": 1,
+		"ung": 1,
+		"ß":   1,
+		"Be":  1,
+		"gr":  1,
+		"ng":  1,
+		"g_":  1,
+	}
 
-func TestCreateProfileWithObscure(t *testing.T) {
-	sampleText := "...TE X123123T"
-	Convey("Subject: Test create profile\n", t, func() {
-		Convey("result of 'TEXT' should contain when n=3:  T:2, E:1, X:1, T:1, ...", func() {
-			result := createOccurenceMap(sampleText, 3)
-			So(result["T"], ShouldEqual, 2)
-			So(result["E"], ShouldEqual, 1)
-			So(result["X"], ShouldEqual, 1)
-			So(result["_T"], ShouldEqual, 1)
-			So(result["TE"], ShouldEqual, 1)
-			So(result["T_"], ShouldEqual, 1)
-			So(result["_T"], ShouldEqual, 1)
-			So(result["XT"], ShouldEqual, 1)
-			So(result["__T"], ShouldEqual, 1)
-			So(result["__X"], ShouldEqual, 1)
-			So(result["_XT"], ShouldEqual, 1)
-			So(result["XT_"], ShouldEqual, 1)
-			So(result["_TE"], ShouldEqual, 1)
-			So(result["TE_"], ShouldEqual, 1)
-			So(result["XT_"], ShouldEqual, 1)
-			So(result["T__"], ShouldEqual, 1)
-		})
-	})
-
+	result := CreateOccurenceMap(sampleText, 2)
+	ensure.DeepEqual(t, sampleResult, result)
 }
 
 func TestRanking(t *testing.T) {
 	sampleText := "AABBCC"
-	Convey("Subject: Test create Ranking Lookup Map\n", t, func() {
-		Convey("AABBCC should result in A, B and C on rank 1-3", func() {
-			result := createOccurenceMap(sampleText, 5)
-			ranking := createRankLookupMap(result)
-			So(ranking["A"], ShouldBeBetween, 0, 4)
-			So(ranking["B"], ShouldBeBetween, 0, 4)
-			So(ranking["C"], ShouldBeBetween, 0, 4)
+	result := CreateOccurenceMap(sampleText, 5)
+	ensure.NotNil(t, result)
+	ranking := CreateRankLookupMap(result)
+	ensure.NotNil(t, ranking)
 
-		})
-	})
-
+	ensure.True(t, ranking["A"] >= 0 && ranking["A"] <= 4)
+	ensure.True(t, ranking["B"] >= 0 && ranking["B"] <= 4)
+	ensure.True(t, ranking["C"] >= 0 && ranking["C"] <= 4)
 }
