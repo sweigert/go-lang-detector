@@ -1,7 +1,9 @@
 package langdet
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"sort"
 )
 
@@ -10,6 +12,23 @@ const nDepth = 4
 
 // defaultMinimumConfidence is the minimum confidence that a language-match must have to be returned as detected language
 var defaultMinimumConfidence float32 = 0.7
+
+var defaultLanguages = []Language{}
+
+var DefaultDetector = Detector{&defaultLanguages, defaultMinimumConfidence}
+
+// InitWithDefault initializes the default languages with a provided file
+// containing Marshalled array of Languages
+func InitWithDefault(filePath string) {
+	analyzedInput, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(fmt.Sprintf("Could not open file of default languages: %v", err))
+	}
+	err = json.Unmarshal(analyzedInput, &defaultLanguages)
+	if err != nil {
+		panic(fmt.Sprintf("Could not unmarshall default languages: %v", err))
+	}
+}
 
 // Detector has an array of detectable Languages and methods to determine the closest Language to a text.
 type Detector struct {
