@@ -14,8 +14,16 @@ import (
 var maxSampleSize = 10000
 var janitor *regexp.Regexp
 
+var paddings []string
+
 func init() {
 	janitor = regexp.MustCompile("P{L}")
+
+	paddings = make([]string, nDepth+2, nDepth+2)
+	for i := 0; i <= nDepth+1; i++ {
+		paddings[i] = createPadding(i)
+	}
+
 }
 
 // Analyze creates the language profile from a given Text and returns it in a Language struct.
@@ -71,18 +79,29 @@ func analyseToken(resultMap map[string]int, token string, gramDepth int) {
 // generateNthGrams creates n-gram tokens from the input string and
 // adds the mapping from token to its number of occurrences to the resultMap
 func generateNthGrams(resultMap map[string]int, text string, n int) {
-	padding := createPadding(n - 1)
+	padding := paddings[n-1]
 	text = padding + text + padding
 	upperBound := utf8.RuneCountInString(text) - (n - 1)
 
-	runeValues := []rune{}
-	for _, runeValue := range text {
-		runeValues = append(runeValues, runeValue)
-	}
+	// buffer array for all runes of an ngram
+	var ngram = make([]rune, n)
+	// current index in the buffer to be written
+	var ngramIndex int
 
-	for p := 0; p < upperBound; p++ {
-		currentToken := string(runeValues[p : p+n])
-		resultMap[currentToken]++
+	// for each rune, add it to the ngram-buffer
+	// and add to the map, if full.
+	for p, runeValue := range text {
+
+		if p == upperBound {
+			break
+		}
+		ngram[ngramIndex] = runeValue
+		// increment buffer index modulo size
+		ngramIndex = (ngramIndex + 1) % n
+		// if 0 again, buffer is full.
+		if ngramIndex == 0 {
+			resultMap[string(ngram)]++
+		}
 	}
 }
 
